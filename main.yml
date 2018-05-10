@@ -21,7 +21,6 @@
       user:
         name: "{{ username }}"
         state: present 
-        group: devgrp
         shell: /bin/bash
   #    check_mode: yes
       tags: [ 'add_new_users' ]

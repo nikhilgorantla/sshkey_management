@@ -1,0 +1,54 @@
+---
+  #This playbook is used to automate the user management on bunched of servers specified in hosts file 
+  # Here we will divide every task into tags so we can execute the tasks individually 
+
+- hosts: "{{ server_add }}"
+  become_user: root
+
+  vars_prompt:
+    - name: server_add
+      private: no 
+      prompt: "Enter the server ip address"
+    - name: username
+      private: no 
+      prompt: "Enter the username"
+
+
+  tasks:
+
+    #Creating user's  
+    - name: Adding user's to the severs  
+      user:
+        name: "{{ username }}"
+        state: present 
+        group: devgrp
+        shell: /bin/bash
+  #    check_mode: yes
+      tags: [ 'add_new_users' ]
+
+    #Creating ssh keys for users  
+    - name: Generating SSH user keys for the user   
+      user:
+        name: "{{ username }}"
+        generate_ssh_key: yes
+        ssh_key_bits: 4096
+        ssh_key_file: .ssh/id_rsa
+      tags: [ 'generate_ssh_keys' ]
+     
+        
+    #This will copy the public keys of user to user account
+    - name: Updating the ssh keys for a user    
+      authorized_key:
+        user: "{{ username }}"
+        state: present 
+        key: "{{ lookup ('file', '/home/{{ username }}/.ssh/id_rsa.pub' ) }}"
+      tags: [ 'copy_public_key' ]
+      
+      
+    #This task will delete the user 
+    - name: Delete the users 
+      user:
+        name: "{{ username }}"
+        state: absent
+      tags: [ 'deleting_users' ]
+
